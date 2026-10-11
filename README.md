@@ -1,17 +1,25 @@
 ## Hackathon Project: Anomaly Detection at the CMS Level-1 Trigger
 
-High-energy colliders, like the Large Hadron Collider, accelerate particles and smash them together, recreating early-universe conditions to search for new phenomena. These collisions generate more data than can be stored, so the CMS Level-1 Trigger (L1T) system must decide what to keep within microseconds, retaining some events and discarding others permanently. Consequently, there is a danger of discarding new physics: if the next discovery looks unlike anything we have predicted, how can we design a trigger that knows to keep it?
+High-energy colliders, like the Large Hadron Collider, accelerate particles and smash them together, recreating early-universe conditions to search for new phenomena. These collisions generate more data than can be stored, so the CMS Level-1 Trigger (L1T) system must decide what to keep within microseconds, retaining some events and discarding others permanently. Consequently, there is a danger of discarding new physics: **if the next discovery looks unlike anything we have predicted, how can we design a trigger that knows to keep it?**
 
+<img src="images/event_display.png" width="500">
 
 ### Anomaly Detection
 
-One way to address this question is by designing a trigger that is an anomaly detection algorithm. Anomaly detection algorithms are typically designed around an autoencoder, which is a machine learning model that compresses the input down to a low-dimensional latent space and then decompresses the latent space representation to match the input as closely as possible. For the CMS L1T use case, the model is trained on what we call "Zero Bias" data, which is a random selection of collision data containing no preferential selection towards any physics. Events we actually would want to trigger on are so rare in the Zero Bias dataset that it is essentially a background dataset without any need for simulation.
+One way to address this question is by designing a trigger that is an anomaly detection algorithm. Anomaly detection algorithms are typically designed around an autoencoder, which is a machine learning model that compresses the input down to a low-dimensional latent space and then decompresses the latent space representation to match the input as closely as possible. 
 
-<img src="images/anomaly_detection.png" width="300">
+For the CMS L1T use case, the model is trained on what we call "Zero Bias" data, which is a random selection of collision data containing no preferential selection towards any physics. Events we actually would want to trigger on are so rare in the Zero Bias dataset that it is essentially a background dataset without any need for simulation. The autoencoder learns to reconstruct Zero Bias data with minimal error, but as it has not been exposed to signal events, it reconstructs signal events poorly. The difference between the input and output images can therefore be used as an "anomaly score". To use this in the contect of the trigger, which makes a "keep or discard" decision, we then set am anomaly score threshold and keep every event which passes the threshold.
+
+<img src="images/anomaly_detection.png" width="500">
+
+### CMS Trigger System
 
 ### CMS Level-1 Trigger Requirements
 
 <img src="images/CMS-PAS-MLG-25-001_Figure_001.png" width="300">
+
+When designing a trigger algorithm, we can't simply train a model and optimize for performance only. These algorithms run "online" during detector operation, so they have latency requirements of tens of microseconds. This ultra-low latency is enabled by running the algorithms on field-programmable gate arrays (FPGAs), which are reprogrammable integrated circuits. The algorithms also must fit onto the FPGAs, often sharing one apparatus with other algorithms. The diagram below compares the streaming data rate and latency requirements of the L1T (both ATLAS and CMS experiments) to those of other HEP experiments and non-HEP applications (i.e. Netflix).
+
 <img src="images/latency_comparison.png" width="300">
 
 
