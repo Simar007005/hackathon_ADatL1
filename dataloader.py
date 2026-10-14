@@ -49,29 +49,45 @@ def preprocess(x: np.ndarray, mask: np.ndarray, features: Sequence[str], scaling
 
 def load_arrays(
     entries: List[List[str]], cfg: dict, max_events: Optional[int], layout: Dict[str, int],
-    features: Sequence[str], apply_scaling: bool = True,
+    features: Sequence[str], apply_scaling: bool = True, chunk_size: int = 20_000,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Load and concatenate a list of [sample, split] entries.
 
     ``layout`` and ``features`` are passed to ``dataset.to_padded``: how many objects of each
     collection to keep (highest Et first) and which features of each object.
 
+    The events are read ``chunk_size`` at a time and written straight into the output arrays,
+    so memory use stays close to the size of the result (this matters on small machines like Binder).
+
     Returns ``x`` (N, n_objects, n_features), ``mask`` (N, n_objects) and the
     integer ``label`` of each event (0 = zero bias, <0 = simulated normal, >0 = signal).
     """
-    xs, masks, labels = [], [], []
+    root = _root(cfg)
+    scaling = cfg.get("scaling") if apply_scaling else None
+
+    # Upper bound on the number of events; fewer remain after dropping removed events.
+    capacity = 0
     for sample, split in entries:
-        events = dataset.load_events(
-            sample, split, max_events=max_events, physical_units=True, root=_root(cfg)
-        )
-        x, mask = dataset.to_padded(events, layout, features)
-        xs.append(x)
-        masks.append(mask)
-        labels.append(np.asarray(events.label, dtype=np.int64))
-    x, mask, label = np.concatenate(xs), np.concatenate(masks), np.concatenate(labels)
-    if apply_scaling:
-        x = preprocess(x, mask, features, cfg.get("scaling"))
-    return x, mask, label
+        n = dataset.num_rows(sample, split, root=root)
+        capacity += n if max_events is None else min(n, max_events)
+    n_objects = sum(layout.values())
+    x = np.empty((capacity, n_objects, len(features)), dtype=np.float32)
+    mask = np.empty((capacity, n_objects), dtype=bool)
+    label = np.empty(capacity, dtype=np.int64)
+
+    n = 0
+    for sample, split in entries:
+        for events in dataset.iter_events(
+            sample, split, max_events=max_events, chunk_size=chunk_size, physical_units=True, root=root
+        ):
+            x_chunk, mask_chunk = dataset.to_padded(events, layout, features)
+            if apply_scaling:
+                x_chunk = preprocess(x_chunk, mask_chunk, features, scaling)
+            k = len(x_chunk)
+            x[n:n + k], mask[n:n + k] = x_chunk, mask_chunk
+            label[n:n + k] = np.asarray(events.label, dtype=np.int64)
+            n += k
+    return x[:n], mask[:n], label[:n]
 
 
 def _to_input(x: np.ndarray, input_type: str) -> np.ndarray:
@@ -98,7 +114,7 @@ class EventData:
 
 
 def make_dataset(x, mask, input_type: str = "flat") -> EventData:
-    return EventData(_to_input(x, input_type).astype(np.float32), mask.astype(bool))
+    return EventData(_to_input(x, input_type).astype(np.float32, copy=False), mask.astype(bool, copy=False))
 
 
 def create_datasets(

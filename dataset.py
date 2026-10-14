@@ -17,7 +17,7 @@ Typical use::
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Iterable, Iterator, Sequence
 
 import awkward as ak
 import numpy as np
@@ -159,6 +159,33 @@ def files(sample: str, split: str, seeds: bool = False, root: str | Path = DEFAU
 # ---------------------------------------------------------------------------
 # Reading
 # ---------------------------------------------------------------------------
+def num_rows(sample: str, split: str, seeds: bool = False, root: str | Path = DEFAULT_ROOT) -> int:
+    """Number of raw rows in a sample/split, from the parquet metadata (nothing is read)."""
+    return sum(pq.ParquetFile(f).metadata.num_rows for f in files(sample, split, seeds=seeds, root=root))
+
+
+def iter_batches(
+    sample: str,
+    split: str,
+    columns: Sequence[str] | None = None,
+    max_events: int | None = None,
+    batch_size: int = 65_536,
+    seeds: bool = False,
+    root: str | Path = DEFAULT_ROOT,
+) -> Iterator[pa.RecordBatch]:
+    """Yield raw parquet rows as pyarrow RecordBatches (optionally only the first N rows)."""
+    n = 0
+    for f in files(sample, split, seeds=seeds, root=root):
+        pf = pq.ParquetFile(f)
+        for batch in pf.iter_batches(columns=columns, batch_size=batch_size):
+            if max_events is not None and n + batch.num_rows > max_events:
+                batch = batch.slice(0, max_events - n)
+            yield batch
+            n += batch.num_rows
+            if max_events is not None and n >= max_events:
+                return
+
+
 def read_table(
     sample: str,
     split: str,
@@ -168,46 +195,19 @@ def read_table(
     root: str | Path = DEFAULT_ROOT,
 ) -> pa.Table:
     """Read raw parquet rows into a pyarrow Table (optionally only the first N)."""
-    batches, n = [], 0
-    for f in files(sample, split, seeds=seeds, root=root):
-        pf = pq.ParquetFile(f)
-        for batch in pf.iter_batches(columns=columns, batch_size=65_536):
-            if max_events is not None and n + batch.num_rows > max_events:
-                batch = batch.slice(0, max_events - n)
-            batches.append(batch)
-            n += batch.num_rows
-            if max_events is not None and n >= max_events:
-                return pa.Table.from_batches(batches)
-    return pa.Table.from_batches(batches)
+    return pa.Table.from_batches(list(iter_batches(sample, split, columns, max_events, seeds=seeds, root=root)))
 
 
-def load_events(
-    sample: str,
-    split: str,
-    max_events: int | None = None,
-    drop_removed: bool = True,
-    physical_units: bool = False,
-    root: str | Path = DEFAULT_ROOT,
-) -> ak.Array:
-    """Load events as an awkward array with one record per collection.
+EVENT_COLUMNS = [
+    f"{coll}_{raw}"
+    for coll, branches in KINEMATIC_BRANCHES.items()
+    for raw in branches.values()
+] + ["label", "L1bit", "order"]
 
-    The result has fields ``muons``, ``jets``, ``egammas``, ``taus`` (jagged,
-    each with ``Et``/``eta``/``phi``), the energy sums ``ET``, ``HT``, ``MET``,
-    ``MHT``, ``FET``, ``FHT`` (one entry each), plus ``label``, ``L1bit`` and
-    ``order``. Calorimeter objects are Et-ordered; muons are sorted here too.
 
-    Args:
-        drop_removed: drop events with ``order == -1`` (removed by the standard
-            preprocessing because they are saturated).
-        physical_units: convert hardware integers to GeV / eta / radians.
-    """
-    columns = [
-        f"{coll}_{raw}"
-        for coll, branches in KINEMATIC_BRANCHES.items()
-        for raw in branches.values()
-    ] + ["label", "L1bit", "order"]
-    table = read_table(sample, split, columns=columns, max_events=max_events, root=root)
-    raw = ak.from_arrow(table)
+def _to_events(data: pa.Table | pa.RecordBatch, drop_removed: bool, physical_units: bool) -> ak.Array:
+    """Turn raw rows (``EVENT_COLUMNS``) into the awkward record layout of :func:`load_events`."""
+    raw = ak.from_arrow(data)
 
     out = {}
     for coll, branches in KINEMATIC_BRANCHES.items():
@@ -230,6 +230,48 @@ def load_events(
     if drop_removed:
         events = events[events.order >= 0]
     return events
+
+
+def load_events(
+    sample: str,
+    split: str,
+    max_events: int | None = None,
+    drop_removed: bool = True,
+    physical_units: bool = False,
+    root: str | Path = DEFAULT_ROOT,
+) -> ak.Array:
+    """Load events as an awkward array with one record per collection.
+
+    The result has fields ``muons``, ``jets``, ``egammas``, ``taus`` (jagged,
+    each with ``Et``/``eta``/``phi``), the energy sums ``ET``, ``HT``, ``MET``,
+    ``MHT``, ``FET``, ``FHT`` (one entry each), plus ``label``, ``L1bit`` and
+    ``order``. Calorimeter objects are Et-ordered; muons are sorted here too.
+
+    Args:
+        drop_removed: drop events with ``order == -1`` (removed by the standard
+            preprocessing because they are saturated).
+        physical_units: convert hardware integers to GeV / eta / radians.
+    """
+    table = read_table(sample, split, columns=EVENT_COLUMNS, max_events=max_events, root=root)
+    return _to_events(table, drop_removed, physical_units)
+
+
+def iter_events(
+    sample: str,
+    split: str,
+    max_events: int | None = None,
+    chunk_size: int = 65_536,
+    drop_removed: bool = True,
+    physical_units: bool = False,
+    root: str | Path = DEFAULT_ROOT,
+) -> Iterator[ak.Array]:
+    """Like :func:`load_events`, but yield the events in chunks of at most ``chunk_size``.
+
+    Use this to process a large sample without holding all of it in memory at once.
+    ``max_events`` counts raw rows, as in :func:`load_events`.
+    """
+    for batch in iter_batches(sample, split, EVENT_COLUMNS, max_events, batch_size=chunk_size, root=root):
+        yield _to_events(batch, drop_removed, physical_units)
 
 
 def load_seeds(sample: str, split: str, max_events: int | None = None, root: str | Path = DEFAULT_ROOT):

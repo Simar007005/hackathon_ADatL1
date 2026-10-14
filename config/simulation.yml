@@ -23,9 +23,9 @@ test:
 
 # Maximum number of events read per [sample, split] entry (null = everything).
 max_events:
-  train: 1000000
-  val: 200000
-  test: 200000
+  train: 500000
+  val: 100000
+  test: 100000
 
 # Input scaling, per feature. Which objects and features go into the model is chosen in
 # train.ipynb (LAYOUT / FEATURES). Applied to real objects only (padding stays 0):
