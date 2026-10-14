@@ -1,0 +1,38 @@
+# Downloaded dataset (multi-GB) -- never commit
+data/
+cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model outputs
+output/
+*.pt
+*.pth
+*.ckpt
+checkpoints/
+runs/
+wandb/
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
+
+# Organiser-only solution notebooks, kept locally
+solutions/
+
+# powerpoints
+*.pptx

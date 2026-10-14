@@ -27,16 +27,11 @@ max_events:
   val: 200000
   test: 200000
 
-# How events are turned into a fixed-size input: number of objects kept per collection
-# (highest Et first) and the features of each object, in physical units.
-input:
-  layout: {MET: 1, muons: 4, jets: 10, egammas: 12, taus: 12}
-  features: [Et, eta, phi]
-
-# Applied per feature, to real objects only (padding stays 0):
+# Input scaling, per feature. Which objects and features go into the model is chosen in
+# train.ipynb (LAYOUT / FEATURES). Applied to real objects only (padding stays 0):
 #   x -> (x - mean) / std, after Et -> log(1 + Et) if log_et is true.
 # Values estimated from zero-bias data.
 scaling:
   log_et: true
-  mean: [1.86, 0.0, 3.14]
-  std: [0.63, 1.29, 1.81]
+  mean: {Et: 1.86, eta: 0.0, phi: 3.14}
+  std: {Et: 0.63, eta: 1.29, phi: 1.81}
