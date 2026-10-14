@@ -245,7 +245,7 @@ def save_trial(name: str, metrics: Dict[str, Dict[str, float]], cost: Dict[str, 
                config: str = "", acceptance: float = None, notes: str = "", path=TRIALS_PATH) -> pd.DataFrame:
     """Append one trial to the trials file (one row per signal) and return all trials.
 
-    metrics: {signal name: {"auc": ..., "efficiency": ...}}
+    metrics: {signal name: {"auc": ..., "efficiency": ..., any other metric: ...}}, one column per metric
     cost:    the model's size, from ``model_cost``: {"n_params": ..., "bops": ..., "n_layers": ...}
     Saving a trial under a name that already exists replaces the old entry.
     """
@@ -255,7 +255,7 @@ def save_trial(name: str, metrics: Dict[str, Dict[str, float]], cost: Dict[str, 
         trials = trials[trials["trial"] != name]
     timestamp = datetime.now().isoformat(timespec="seconds")
     new = pd.DataFrame([
-        {"trial": name, "signal": signal, "auc": m["auc"], "efficiency": m["efficiency"],
+        {"trial": name, "signal": signal, **m,
          "acceptance": acceptance, **cost, "model_path": str(model_path),
          "config": str(config), "notes": notes, "timestamp": timestamp}
         for signal, m in metrics.items()

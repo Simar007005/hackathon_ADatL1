@@ -115,7 +115,7 @@ There are three levels. Each builds on the previous one.
 
 **Level 2 (Brevitas).** Train a quantized autoencoder by replacing the PyTorch layers with Brevitas layers (see [Quantization](#quantization)). Start from `dense-qae`: how few bits can you use before the performance drops? Is it better to have a big model with few bits, or a small model with more bits?
 
-**Level 3 (hls4ml).** Convert your model into C++ with hls4ml in [`convert_hls4ml.ipynb`](convert_hls4ml.ipynb), and verify that the converted model gives the same answers as the PyTorch model. Compare a float model converted with few bits with a quantization-aware trained one.
+**Level 3 (hls4ml).** Convert your model into C++ with hls4ml in [`convert_hls4ml.ipynb`](convert_hls4ml.ipynb), and verify that the converted model gives the same answers as the PyTorch model. Compare a float model converted with few bits with a quantization-aware trained one. In the end, what counts is the firmware: find the best model on the Pareto front of the *firmware* trials, and check that its trigger threshold still keeps the rate it should.
 
 The next step would be synthesis into a hardware description language (Verilog/VHDL), but we will stop here: the last section of `convert_hls4ml.ipynb` explains what it would involve.
 
