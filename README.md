@@ -158,8 +158,9 @@ These are estimates: the real resource usage and latency come from synthesis (se
 
 ### Getting started
 
-1. Clone the repository in JupyterLab and open [`setup.ipynb`](setup.ipynb). It creates a virtual
-   environment, registers it as a Jupyter kernel, checks the GPU and downloads the data.
+1. Clone the repository in JupyterLab and open [`setup.ipynb`](setup.ipynb). On BinderHub it installs the few
+   libraries missing from the image; elsewhere it creates a virtual environment and registers it as a Jupyter kernel.
+   It then checks the GPU and downloads the data.
 2. [`explore_data.ipynb`](explore_data.ipynb): a tour of the dataset.
 3. [`train.ipynb`](train.ipynb): choose the input objects and features, choose or write a model, and train it.
    Run it as it is to train the baseline `dense-ae`; set `model_type = "dense-qae"` to train the quantized one.
