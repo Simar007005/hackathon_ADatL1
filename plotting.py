@@ -13,14 +13,32 @@ def savefig(fig, path: Path, dpi: int = 160):
     print(f"[PLOT] saved {path}")
 
 
-def plot_data_distributions(data, feature_names=("Et", "eta", "phi"), outpath=None):
-    """Histogram each (scaled) input feature over the real objects in an EventData."""
-    x = data.x.reshape(len(data.x), data.mask.shape[1], -1)[data.mask]  # (n_objects_total, n_features)
-    fig, axes = plt.subplots(1, x.shape[1], figsize=(4 * x.shape[1], 3.5))
-    for i, ax in enumerate(np.atleast_1d(axes)):
-        ax.hist(x[:, i], bins=100, histtype="step")
-        ax.set_xlabel(f"{feature_names[i]} (scaled)")
-        ax.set_yscale("log")
+def plot_data_distributions(data, layout, feature_names=("Et", "eta", "phi"), outpath=None):
+    """Histogram each (scaled) input feature over the real objects in an EventData, one row per collection.
+
+    ``layout`` is the collection -> number of slots dict the data was built with (``LAYOUT`` in train.ipynb).
+    Panels for features a collection does not have (e.g. eta for MET) are left empty.
+    """
+    import dataset
+
+    n_features = len(feature_names)
+    x = data.x.reshape(len(data.x), data.mask.shape[1], n_features)
+    fig, axes = plt.subplots(len(layout), n_features, figsize=(3.5 * n_features, 2.5 * len(layout)), squeeze=False)
+    start = 0
+    for row, (coll, n_slots) in zip(axes, layout.items()):
+        sl = slice(start, start + n_slots)
+        start += n_slots
+        objs = x[:, sl][data.mask[:, sl]]  # (n_objects, n_features)
+        for i, (ax, feat) in enumerate(zip(row, feature_names)):
+            if feat not in dataset.KINEMATIC_BRANCHES.get(coll, {}):
+                ax.text(0.5, 0.5, f"{coll} has no {feat}", ha="center", va="center", transform=ax.transAxes, color="gray")
+                ax.set_xticks([])
+                ax.set_yticks([])
+                continue
+            ax.hist(objs[:, i], bins=100, histtype="step")
+            ax.set_yscale("log")
+            ax.set_title(f"{coll} ({n_slots} slot{'s' if n_slots > 1 else ''})", fontsize=9)
+            ax.set_xlabel(f"{feat} (scaled)")
     fig.tight_layout()
     if outpath:
         savefig(fig, outpath)
