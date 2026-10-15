@@ -1,0 +1,58 @@
+# Same as baseline.yml, but evaluate on all 20 simulated signals in the dataset.
+# Models trained with baseline.yml can be evaluated with this config: the training data is the same.
+# `root` is the folder containing the dataset's data/ directory, relative to the repo root.
+# The default "." means ./data/<sample>/. Point it at a shared copy of the dataset if there is one.
+root: .
+
+# Anomaly detection is unsupervised: train and validate on normal data only.
+# Each entry is [sample, split]. Only the zero-bias samples have a "train" split.
+train:
+- [ZB_run396102, train]
+val:
+- [ZB_run396102, valid]
+
+# Evaluation: background (normal data) vs. each signal separately.
+test:
+  background:
+  - [ZB_run396102, test]
+  signals:
+  # The four signals of baseline.yml
+  - [GluGluHto2Tau_Par-MH-125, test]
+  - [WtoTauto3Mu, test]
+  - [SUSYGluGluToBBHTo2B_Par-M-1200, test]
+  - [haa-4b-ma15, test]
+  # Single Higgs boson
+  - [GluGluHTo2B_Par-MH-125, test]
+  - [GluGluHto2G_Par-MH-125, test]
+  - [GluGluHto2G_Par-MH-90, test]
+  - [VBFHto2B_Par-MH-125, test]
+  - [VBFHTo2C_Par-MH-125, test]
+  - [VBFHto2Tau_Par-MH-125, test]
+  - [TTHto2B_Par-MH-125, test]
+  - [TTHTo2C_Par-MH-125, test]
+  # Di- and triple Higgs production
+  - [GluGlutoHHto2B2WtoLNu2Q_Par-c2-0-kl-1-kt-1, test]
+  - [HHHto4B2Tau_Par-c3-0-d4-0, test]
+  - [HHHto6B_Par-c3-0-d4-0, test]
+  # Supersymmetric Higgs (bbH -> bb), a scan in mass
+  - [SUSYGluGluToBBHToBB_Par-M-120, test]
+  - [SUSYGluGluToBBHToBB_Par-M-350, test]
+  - [SUSYGluGluToBBHToBB_Par-M-600, test]
+  # Dark showers / hidden valleys
+  - [ggH-suep-decay, test]
+  - [smj-case-A, test]
+
+# Maximum number of events read per [sample, split] entry (null = everything).
+max_events:
+  train: 500000
+  val: 100000
+  test: 100000
+
+# Input scaling, per feature. Which objects and features go into the model is chosen in
+# train.ipynb (LAYOUT / FEATURES). Applied to real objects only (padding stays 0):
+#   x -> (x - mean) / std, after Et -> log(1 + Et) if log_et is true.
+# Values estimated from zero-bias data.
+scaling:
+  log_et: true
+  mean: {Et: 1.86, eta: 0.0, phi: 3.14}
+  std: {Et: 0.63, eta: 1.29, phi: 1.81}

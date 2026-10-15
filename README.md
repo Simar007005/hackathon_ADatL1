@@ -61,7 +61,9 @@ The config files in `config/` define three experiments:
 - `combined`: train on both zero-bias runs
 - `simulation`: train on *simulated* zero-bias events (SingleNeutrino), evaluate on real data
 
-All three evaluate on the same zero-bias test data and the same set of simulated signals.
+All three evaluate on the same zero-bias test data and the same set of four simulated signals.
+`extended_signals` is `baseline` evaluated on all 20 signals in the dataset: set `CONFIG` in
+`evaluate.ipynb` to it to test a model trained with `baseline` on many more kinds of new physics.
 
 <!-- TODO(organisers): the research question. For example:
 The goal is to train a model that flags signal events as anomalous while keeping only a small fraction
