@@ -198,3 +198,85 @@ The TODOs in the notebooks mark the places to make choices or fill in code. Add 
   url       = {https://doi.org/10.5281/zenodo.21787779}
 }
 ```
+
+### Further reading
+
+Papers and notes for anyone who wants to go deeper. You don't need any of them for the hackathon.
+
+#### Anomaly detection in the Level-1 Trigger
+
+- E. Govorkova et al., [Autoencoders on field-programmable gate arrays for real-time, unsupervised new physics detection at 40 MHz at the Large Hadron Collider](https://arxiv.org/abs/2108.03986), Nature Machine Intelligence 4 (2022) 154. The paper that started anomaly detection at the L1T: a good place to start.
+- E. Govorkova et al., [LHC physics dataset for unsupervised New Physics detection at 40 MHz](https://arxiv.org/abs/2107.02157), Scientific Data 9 (2022) 118. A simulated predecessor of this hackathon's dataset.
+- A. Gandrakota for the CMS Collaboration, [Real-time Anomaly Detection at the L1 Trigger of CMS Experiment](https://arxiv.org/abs/2411.19506) (2024). An overview of AXOL1TL and CICADA.
+- CMS Collaboration, [Unsupervised anomaly detection for real-time data acquisition in the CMS experiment at the Large Hadron Collider](https://cds.cern.ch/record/2967864), CMS-PAS-MLG-25-001 (2026). The source of Figure 2.
+- T. Vami for the CMS Collaboration, [Model-independent searches and anomaly detection at the CMS experiment](https://arxiv.org/abs/2609.31739) (2026).
+- A. A. Pol et al., [Knowledge Distillation for Anomaly Detection](https://arxiv.org/abs/2310.06047) (2023). Train a big unsupervised *teacher*, then a small supervised *student* that predicts the teacher's anomaly score: the idea behind CICADA.
+- L. Gerlach, E. Kauffman, A. Mallampalli et al., [Evaluation of Novel Fast Machine Learning Algorithms for Knowledge-Distillation-Based Anomaly Detection at CMS](https://arxiv.org/abs/2510.15672) (2025). CICADA students built with HGQ and with logic gate networks.
+- L. Gerlach, E. Kauffman, L. Våge, I. Ojalvo et al., [Rapid Inference of Logic Gate Neural Networks for Anomaly Detection in High Energy Physics](https://arxiv.org/abs/2511.01908) (2025). Logic gate networks for CICADA on public CICADA data.
+- [It's not a FAD: first results in using Flows for unsupervised Anomaly Detection at 40 MHz at the Large Hadron Collider](https://arxiv.org/abs/2508.11594) (2025).
+- [Distilling Normalizing Flows for Real-Time Anomaly Detection at the LHC](https://arxiv.org/abs/2608.19912) (2026) and [Knowledge Distillation of a Normalising Flow for Real-Time Anomaly Detection at LHC Level-1 Trigger](https://arxiv.org/abs/2609.15295) (2026).
+- [Anomaly detection with spiking neural networks for LHC physics](https://arxiv.org/abs/2508.00063) (2025).
+- [DECADE: Decorrelated anomaly detection triggers to enhance the low-mass discovery potential of the LHC](https://arxiv.org/abs/2508.10224) (2025). Anomaly detection with decision trees for FPGA triggers.
+
+#### CMS detector performance (DP) notes on AXOL1TL and CICADA
+
+- [Anomaly Detection in the CMS Global Trigger Test Crate for Run 3](https://cds.cern.ch/record/2876546), CMS-DP-2023-079 (2023). AXOL1TL.
+- [Level-1 Trigger Calorimeter Image Convolutional Anomaly Detection Algorithm (CICADA)](https://cds.cern.ch/record/2879816) (2023).
+- [2024 Data Collected with AXOL1TL Anomaly Detection at the CMS Level-1 Trigger](https://cds.cern.ch/record/2904695), CMS-DP-2024-059 (2024).
+- [Model-Independent Real-Time Anomaly Detection at the CMS Level-1 Calorimeter Trigger with CICADA](https://cds.cern.ch/record/2917884), CMS-DP-2024-121 (2024).
+- [Anomaly detection with AXOL1TL at the CMS Level-1 Trigger in 2024 and 2025](https://cds.cern.ch/record/2942560), CMS-DP-2025-061 (2025).
+- More L1T results on the [CMS Level-1 Trigger public results page](https://twiki.cern.ch/twiki/bin/view/CMSPublic/L1TriggerDPGResults).
+
+#### Anomaly detection in particle physics more broadly
+
+- [Machine Learning for Anomaly Detection in Particle Physics](https://arxiv.org/abs/2312.14190) (2023). A review.
+- L. Ruff et al., [A Unifying Review of Deep and Shallow Anomaly Detection](https://arxiv.org/abs/2009.11732), Proc. IEEE 109 (2021) 756. A review from the machine learning side.
+- T. Aarrestad et al., [The Dark Machines Anomaly Score Challenge: Benchmark Data and Model Independent Event Classification for the Large Hadron Collider](https://arxiv.org/abs/2105.14027), SciPost Phys. 12 (2022) 043. Compares many architectures on the same data.
+
+Different kinds of anomaly detection model:
+
+- **Autoencoders** (anomaly score = reconstruction error, as in this hackathon): M. Farina, Y. Nakai and D. Shih, [Searching for New Physics with Deep Autoencoders](https://arxiv.org/abs/1808.08992), Phys. Rev. D 101 (2020) 075021, and T. Heimel et al., [QCD or What?](https://arxiv.org/abs/1808.08979), SciPost Phys. 6 (2019) 030.
+- **Variational autoencoders** (the latent space is a probability distribution, and the score can be computed from the latent space alone, without the decoder): O. Cerri et al., [Variational Autoencoders for New Physics Mining at the Large Hadron Collider](https://arxiv.org/abs/1811.10276), JHEP 05 (2019) 036, and P. Jawahar et al., [Improving Variational Autoencoders for New Physics Detection at the LHC with Normalizing Flows](https://arxiv.org/abs/2110.08508), Front. Big Data 5 (2022) 803685.
+- **Density estimation with normalizing flows** (anomaly score = how unlikely the event is): B. Nachman and D. Shih, [Anomaly Detection with Density Estimation](https://arxiv.org/abs/2001.04990), Phys. Rev. D 101 (2020) 075042, and A. Hallin et al., [Classifying Anomalies THrough Outer Density Estimation (CATHODE)](https://arxiv.org/abs/2109.00546), Phys. Rev. D 106 (2022) 055006.
+- **Weak supervision** (train a classifier between a signal region and its sidebands, offline only): J. Collins, K. Howe and B. Nachman, [Anomaly Detection for Resonant New Physics with Machine Learning](https://arxiv.org/abs/1805.02664), Phys. Rev. Lett. 121 (2018) 241803.
+- **Self-supervised / contrastive learning** (learn a representation of events first, then look for anomalies in it): B. Dillon et al., [Symmetries, Safety, and Self-Supervision](https://arxiv.org/abs/2108.04253), SciPost Phys. 12 (2022) 188.
+- **Knowledge distillation** (a cheap student imitates an expensive teacher): see Pol et al. in the [Level-1 Trigger section](#anomaly-detection-in-the-level-1-trigger) above.
+
+Challenges and reviews:
+
+- G. Kasieczka et al., [The LHC Olympics 2020: A Community Challenge for Anomaly Detection in High Energy Physics](https://arxiv.org/abs/2101.08320), Rep. Prog. Phys. 84 (2021) 124201.
+- [Review of Machine Learning for Real-Time Analysis at the Large Hadron Collider experiments ALICE, ATLAS, CMS and LHCb](https://arxiv.org/abs/2506.14578) (2025).
+
+#### hls4ml and quantization
+
+- J. Duarte et al., [Fast inference of deep neural networks in FPGAs for particle physics](https://arxiv.org/abs/1804.06913), JINST 13 (2018) P07027. The original hls4ml paper.
+- F. Fahim et al., [hls4ml: An Open-Source Codesign Workflow to Empower Scientific Low-Power Machine Learning Devices](https://arxiv.org/abs/2103.05579) (2021).
+- [hls4ml: A Flexible, Open-Source Platform for Deep Learning Acceleration on Reconfigurable Hardware](https://arxiv.org/abs/2512.01463) (2025). The most up-to-date description of hls4ml.
+- C. Coelho et al., [Automatic heterogeneous quantization of deep neural networks for low-latency inference on the edge for particle detectors](https://arxiv.org/abs/2006.10159), Nature Machine Intelligence 3 (2021) 675. QKeras.
+- B. Hawks et al., [Ps and Qs: Quantization-aware pruning for efficient low latency neural network inference](https://arxiv.org/abs/2102.11289), Front. AI 4 (2021) 676564. Where the BOPs estimate comes from.
+- A. Pappalardo et al., [QONNX: Representing Arbitrary-Precision Quantized Neural Networks](https://arxiv.org/abs/2206.07527) (2022). The format Brevitas models are exported to.
+- C. Sun et al., [HGQ: High Granularity Quantization for Real-time Neural Networks on FPGAs](https://arxiv.org/abs/2405.00645) (2024). Learns a separate bit width for every weight and activation.
+
+#### Fast machine learning
+
+- A. Deiana et al., [Applications and Techniques for Fast Machine Learning in Science](https://arxiv.org/abs/2110.13041), Front. Big Data 5 (2022) 787421. A broad review.
+- J. Duarte et al., [FastML Science Benchmarks: Accelerating Real-Time Scientific Edge Machine Learning](https://arxiv.org/abs/2207.07958) (2022).
+- C. Sun et al., [da4ml: Distributed Arithmetic for Real-time Neural Networks on FPGAs](https://arxiv.org/abs/2507.04535) (2025). Replaces the multiplications by a constant weight with additions and bit shifts.
+
+Multiplication-free networks: on an FPGA, the cheapest network is one that doesn't multiply at all.
+
+- I. Hubara, M. Courbariaux et al., [Binarized Neural Networks](https://arxiv.org/abs/1602.02830), NeurIPS 2016. Weights and activations of ±1, so every multiplication becomes an XNOR.
+- Y. Umuroglu et al., [FINN: A Framework for Fast, Scalable Binarized Neural Network Inference](https://arxiv.org/abs/1612.07119), FPGA 2017.
+- H. Chen et al., [AdderNet: Do We Really Need Multiplications in Deep Learning?](https://arxiv.org/abs/1912.13200), CVPR 2020.
+- M. Elhoushi et al., [DeepShift: Towards Multiplication-Less Neural Networks](https://arxiv.org/abs/1905.13298) (2019). Power-of-two weights, so multiplications become bit shifts.
+
+Logic gate and lookup-table networks: the network *is* the circuit.
+
+- Y. Umuroglu et al., [LogicNets: Co-Designed Neural Networks and Circuits for Extreme-Throughput Applications](https://arxiv.org/abs/2004.03021), FPL 2020.
+- M. Andronic and G. Constantinides, [PolyLUT: Learning Piecewise Polynomials for Ultra-Low Latency FPGA LUT-based Inference](https://arxiv.org/abs/2309.02334) (2023).
+- M. Andronic and G. Constantinides, [NeuraLUT: Hiding Neural Network Density in Boolean Synthesizable Functions](https://arxiv.org/abs/2403.00849) (2024).
+- F. Petersen et al., [Deep Differentiable Logic Gate Networks](https://arxiv.org/abs/2210.08277), NeurIPS 2022.
+- F. Petersen et al., [Convolutional Differentiable Logic Gate Networks](https://arxiv.org/abs/2411.04732), NeurIPS 2024.
+- A. Bacellar et al., [Differentiable Weightless Neural Networks](https://arxiv.org/abs/2410.11112), ICML 2024.
+- L. Gerlach, L. Våge, T. Gerlach, E. Kauffman et al., [WARP-LUTs: Walsh-Assisted Relaxation for Probabilistic Look Up Tables](https://arxiv.org/abs/2510.15655) (2025). Learns lookup tables with far fewer parameters than differentiable logic gate networks, so it trains faster and scales to 4-input LUTs.
+- L. Gerlach, T. Gerlach, L. Våge, E. Kauffman et al., [WARP Logic Neural Networks](https://arxiv.org/abs/2602.03527) (2026).
