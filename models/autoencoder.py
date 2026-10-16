@@ -372,32 +372,6 @@ def quantized_dense_autoencoder_sub5k_6layer(input_shape, latent_dim: int = 3, b
         quant_dense(4, 6, bits), quant_relu(bits),
         quant_dense(6, n_in, bits),
     )
-@register("compact-qae-4layer", input_type="flat")
-def compact_quantized_autoencoder_4layer(
-    input_shape,
-    hidden_dim: int = 8,
-    latent_dim: int = 4,
-    bits: int = 2,
-):
-    """Four-dense-layer compact QAT autoencoder."""
-    n_in = math.prod(input_shape)
-
-    return nn.Sequential(
-        quant_input(bits),
-
-        quant_dense(n_in, hidden_dim, bits),
-        quant_relu(bits),
-
-        quant_dense(hidden_dim, latent_dim, bits),
-
-        # Quantize the bottleneck before decoding.
-        quant_input(bits),
-
-        quant_dense(latent_dim, hidden_dim, bits),
-        quant_relu(bits),
-
-        quant_dense(hidden_dim, n_in, bits),
-    )
 
 
 
