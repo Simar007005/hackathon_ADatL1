@@ -57,17 +57,21 @@ jobs:
           name: results
           path: ${{ runner.temp }}
 
-      - name: Write LEADERBOARD.md
+      - name: Write and commit LEADERBOARD.md
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: python3 leaderboard/render.py "${{ runner.temp }}/results.json"
-
-      - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add LEADERBOARD.md
-          git diff --cached --quiet && exit 0
-          git commit -m "Update leaderboard"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          # If main moved on while we were scoring (e.g. someone pushed LEADERBOARD.md), render again on top of it.
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            python3 leaderboard/render.py "${{ runner.temp }}/results.json"
+            git add LEADERBOARD.md
+            git diff --cached --quiet && exit 0
+            git commit -m "Update leaderboard"
+            git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1
