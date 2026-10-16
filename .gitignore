@@ -36,3 +36,6 @@ solutions/
 
 # powerpoints
 *.pptx
+
+# ...except leaderboard submissions
+!submissions/**/best_model.pt

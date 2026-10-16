@@ -1,0 +1,13 @@
+# What leaderboard/score.py needs: requirements.txt without hls4ml and Jupyter, and CPU-only PyTorch.
+--extra-index-url https://download.pytorch.org/whl/cpu
+numpy>=1.24
+pandas>=2.0
+pyarrow>=14
+awkward>=2.0
+huggingface-hub>=0.24
+pyyaml>=6.0
+cloudpickle>=3.0
+scikit-learn>=1.3
+torch>=2.9
+brevitas>=0.13
+tqdm>=4.0

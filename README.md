@@ -158,6 +158,71 @@ These are estimates: the real resource usage and latency come from synthesis (se
 
 `evaluate.ipynb` saves every model you evaluate as a *trial* and plots all trials, performance against BOPs. The dashed line in that plot is the *Pareto front*: the models that no other model beats at a lower cost. A good model pushes the front up (better physics) and to the left (cheaper hardware).
 
+### Leaderboard
+
+See the **[leaderboard](LEADERBOARD.md)**. Every team can put one model on it. All models are scored the same way, on
+the test samples of `config/baseline.yml` (zero-bias run 396102 against the four benchmark signals), whichever
+config you trained with:
+
+| Column | What it is |
+|---|---|
+| mean AUC | the AUC averaged over the four benchmark signals. The leaderboard is ranked by it (ties go to fewer BOPs). |
+| lowest AUC | the AUC of the signal your model finds hardest. A good anomaly detector has no blind spot. |
+| highest AUC | the AUC of the signal your model finds easiest. |
+| reconstruction error | the mean reconstruction error (the anomaly score) of the zero-bias test events. It depends on your inputs and their scaling, so it is only comparable between models with the same inputs. |
+| BOPs | the FPGA cost estimate (see [Hardware cost](#hardware-cost-bops-and-layers)). Lower is better. |
+
+A ★ marks the Pareto front: models that no other model beats on both mean AUC and BOPs. A small model on the front
+is as much of a result as the top of the table.
+
+#### How to submit
+
+1. Train your model with [`train.ipynb`](train.ipynb). It saves `best_model.pt` and `inputs.yml` to `output/<RUN_NAME>/`.
+2. Score it yourself first, from a terminal in the repository folder. This runs exactly what the leaderboard runs:
+
+   ```bash
+   python leaderboard/score.py output/<RUN_NAME>
+   ```
+
+3. Pick a team name (letters, digits, `_`, `-` and `.`, e.g. `team_x`) and copy the two files into
+   `submissions/<team>/`:
+
+   ```bash
+   mkdir -p submissions/<team>
+   cp output/<RUN_NAME>/best_model.pt output/<RUN_NAME>/inputs.yml submissions/<team>/
+   ```
+
+4. Open a pull request that adds `submissions/<team>/` to this repository. With git: [fork the repository](https://github.com/ekauffma/hackathon_ADatL1/fork) on GitHub, then
+
+   ```bash
+   git remote add fork https://github.com/<your GitHub username>/hackathon_ADatL1.git
+   git checkout -b submit-<team>
+   git add submissions/<team>
+   git commit -m "Submission from <team>"
+   git push fork submit-<team>
+   ```
+
+   and open the pull request from the link that `git push` prints. Without git: download the two files from
+   JupyterLab, open the [`submissions/`](submissions) folder on GitHub, choose *Add file → Upload files*, and drag in
+   a folder named after your team that holds them. GitHub makes the fork and the pull request for you.
+5. The *Check submission* workflow scores your model on the pull request: open *Checks → Check submission → Summary*
+   to see the result, or the log to see why it failed. Once it passes, the organisers merge the pull request, and
+   the leaderboard updates a few minutes later.
+
+To replace your model, open a new pull request that overwrites the two files in `submissions/<team>/`. The
+leaderboard shows the latest version, with the commit, time and author of the last change.
+
+Things to know:
+- Only change files in `submissions/<team>/`. If your model is defined in `models/autoencoder.py` rather than in
+  the notebook, include that change in the pull request too, otherwise the leaderboard can't rebuild your model.
+- The model file contains the code that builds the model, saved with Python 3.14 (the hackathon environment). Save
+  it there, or the leaderboard may not be able to load it.
+- The leaderboard runs on a CPU, so keep the model small enough to score the test set in a few minutes (any model
+  that fits on a trigger FPGA does).
+- The test samples are public, so it is possible to tune to them. Don't: the point is a model that finds new
+  physics nobody has simulated yet. `config/extended_signals.yml` has 16 more signals to check that your model
+  generalises.
+
 ### Getting started
 
 1. Clone the repository in JupyterLab and open [`setup.ipynb`](setup.ipynb). On BinderHub it installs the few
@@ -170,6 +235,7 @@ These are estimates: the real resource usage and latency come from synthesis (se
    (performance vs. cost).
 5. [`convert_hls4ml.ipynb`](convert_hls4ml.ipynb): convert a model to FPGA firmware with hls4ml, check how
    fixed-point arithmetic changes its output, and convert a quantization-aware trained (Brevitas) model.
+6. Submit your best model to the [leaderboard](LEADERBOARD.md): see [How to submit](#how-to-submit).
 
 The TODOs in the notebooks mark the places to make choices or fill in code. Add your own models in the notebook or in
 `models/autoencoder.py` with the `@register(...)` decorator.
@@ -184,6 +250,8 @@ The TODOs in the notebooks mark the places to make choices or fill in code. Add 
 | `models/` | model definitions and quantized layers (`autoencoder.py`), and the model registry |
 | `utils.py` | training, metrics, model cost (BOPs), trials, and hls4ml / QONNX helpers |
 | `plotting.py` | plots |
+| `submissions/` | the leaderboard entries, one folder per team (see [Leaderboard](#leaderboard)) |
+| `leaderboard/` | scoring (`score.py`) and the leaderboard table (`render.py`), run by the workflows in `.github/workflows/` |
 
 ### Citation
 
