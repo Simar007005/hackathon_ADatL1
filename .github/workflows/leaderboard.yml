@@ -1,0 +1,73 @@
+# Rescore every submission on main and commit the updated LEADERBOARD.md.
+# Scoring (which runs the submitted models) gets a read-only token; only the render job, which never loads a
+# model, may push.
+name: Leaderboard
+
+on:
+  push:
+    branches: [main]
+    paths: ["submissions/**", "leaderboard/**", "config/baseline.yml", ".github/workflows/leaderboard.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: leaderboard
+  cancel-in-progress: false
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"  # must match the hackathon environment (runtime.txt): pickled models are tied to it
+
+      - name: Install dependencies
+        run: pip install -r leaderboard/requirements.txt
+
+      - uses: actions/cache@v4
+        with:
+          path: data
+          key: test-data-${{ hashFiles('config/baseline.yml') }}
+
+      - name: Score every submission
+        run: python leaderboard/score.py --all --out results.json --markdown "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: results
+          path: results.json
+
+  render:
+    needs: score
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # for the date and author of each submission
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: results
+          path: ${{ runner.temp }}
+
+      - name: Write LEADERBOARD.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 leaderboard/render.py "${{ runner.temp }}/results.json"
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add LEADERBOARD.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Update leaderboard"
+          git pull --rebase origin main
+          git push origin HEAD:main

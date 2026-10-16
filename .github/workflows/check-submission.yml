@@ -1,0 +1,46 @@
+# Score the submissions a pull request adds or changes, and show the result in the run summary.
+# Runs the submitted models (which contain pickled code) with a read-only token and no secrets.
+name: Check submission
+
+on:
+  pull_request:
+    paths: ["submissions/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"  # must match the hackathon environment (runtime.txt): pickled models are tied to it
+
+      - name: Install dependencies
+        run: pip install -r leaderboard/requirements.txt
+
+      - uses: actions/cache@v4
+        with:
+          path: data
+          key: test-data-${{ hashFiles('config/baseline.yml') }}
+
+      - name: Score the changed submissions
+        run: |
+          base=$(git merge-base origin/${{ github.base_ref }} HEAD)
+          teams=$(git diff --name-only "$base" HEAD -- submissions/ | cut -d/ -f2 | sort -u)
+          folders=()
+          for team in $teams; do
+            [ -d "submissions/$team" ] && folders+=("submissions/$team")
+          done
+          if [ ${#folders[@]} -eq 0 ]; then
+            echo "No submission folders changed." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "## Leaderboard scores" >> "$GITHUB_STEP_SUMMARY"
+          python leaderboard/score.py "${folders[@]}" --markdown "$GITHUB_STEP_SUMMARY"
